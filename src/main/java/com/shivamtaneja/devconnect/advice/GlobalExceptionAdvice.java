@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.shivamtaneja.devconnect.common.response.ApiResponse;
+import com.shivamtaneja.devconnect.exceptions.ExistsException;
+import com.shivamtaneja.devconnect.exceptions.NotFoundException;
 import com.shivamtaneja.devconnect.utils.StringConstants;
 
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +28,13 @@ public class GlobalExceptionAdvice {
    *         (Bad Request), along with a detailed error message.
    */
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ApiResponse> handleValidationException(MethodArgumentNotValidException e) {
+  public ResponseEntity<ApiResponse<String>> handleValidationException(MethodArgumentNotValidException e) {
     String errMessage = e.getBindingResult().getFieldErrors().stream()
         .map(err -> err.getField() + ": " + err.getDefaultMessage()).collect(Collectors.joining(", "));
 
-    ApiResponse response = new ApiResponse(
+    ApiResponse<String> response = new ApiResponse<>(
         HttpStatus.BAD_REQUEST.value(),
-        "Validation failed",
+        StringConstants.VALIDATION_ERROR,
         errMessage,
         false);
 
@@ -46,14 +48,48 @@ public class GlobalExceptionAdvice {
    *         (Bad Request), along with a detailed error message.
    */
   @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<ApiResponse> handleMissingBody() {
-    ApiResponse response = new ApiResponse(
+  public ResponseEntity<ApiResponse<String>> handleMissingBody() {
+    ApiResponse<String> response = new ApiResponse<>(
         HttpStatus.BAD_REQUEST.value(),
-        "Validation failed",
+        StringConstants.VALIDATION_ERROR,
         StringConstants.REQUEST_BODY_MISSING_OR_MALFORMED_MESSAGE,
         false);
 
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+  }
+
+  /**
+   * Handles Exists exceptions when creating new entity.
+   *
+   * @return a ExistsException containing an ApiResponse with HTTP status 409
+   *         (Conflict), along with a detailed error message.
+   */
+  @ExceptionHandler(ExistsException.class)
+  public ResponseEntity<ApiResponse<String>> handleExistsError(ExistsException e) {
+    ApiResponse<String> response = new ApiResponse<>(
+        HttpStatus.CONFLICT.value(),
+        e.getMessage(),
+        StringConstants.EXISTS_ERROR,
+        false);
+
+    return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+  }
+
+  /**
+   * Handles Not Found exceptions.
+   *
+   * @return a NotFoundException containing an ApiResponse with HTTP status 404
+   *         (Not Found), along with a detailed error message.
+   */
+  @ExceptionHandler(NotFoundException.class)
+  public ResponseEntity<ApiResponse<String>> handleNotFoundException(NotFoundException e) {
+    ApiResponse<String> response = new ApiResponse<>(
+        HttpStatus.NOT_FOUND.value(),
+        e.getMessage(),
+        StringConstants.NOT_FOUND_ERROR,
+        false);
+
+    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
   }
 
   /**
@@ -64,8 +100,8 @@ public class GlobalExceptionAdvice {
    *         (Internal Server Error), along with a detailed error message.
    */
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ApiResponse> handleException(Exception e) {
-    ApiResponse response = new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+  public ResponseEntity<ApiResponse<String>> handleException(Exception e) {
+    ApiResponse<String> response = new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(),
         StringConstants.GENERAL_ERROR_MESSAGE, e.getMessage(), false);
 
     return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
