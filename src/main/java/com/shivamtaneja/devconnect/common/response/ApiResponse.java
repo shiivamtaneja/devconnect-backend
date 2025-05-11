@@ -9,5 +9,5 @@ public class ApiResponse<T> {
   private int code;
   private T data;
   private String error;
-  private Boolean success;  
+  private Boolean success;
 }
