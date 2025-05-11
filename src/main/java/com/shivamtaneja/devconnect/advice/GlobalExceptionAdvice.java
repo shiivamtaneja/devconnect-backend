@@ -1,5 +1,6 @@
 package com.shivamtaneja.devconnect.advice;
 
+import java.io.IOException;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
@@ -90,6 +91,21 @@ public class GlobalExceptionAdvice {
             false);
 
     return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+  }
+
+  /**
+   * Handles IOException.
+   *
+   * @param e the exception that was thrown.
+   * @return a ResponseEntity containing an ApiResponse with HTTP status 500
+   * (Internal Server Error), along with a detailed error message.
+   */
+  @ExceptionHandler(IOException.class)
+  public ResponseEntity<ApiResponse<String>> handleIOException(IOException e) {
+    ApiResponse<String> response = new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            StringConstants.IO_ERROR_MESSAGE, e.getMessage(), false);
+
+    return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   /**

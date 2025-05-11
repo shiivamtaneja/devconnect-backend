@@ -10,6 +10,7 @@ spring:
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PSWD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -17,6 +18,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
+
+    cloud:
+      azure:
+        storage:
+          connection-string: ${AZURE_STORAGE_CONNECTION_STRING}
 
 springdoc:
   api-docs:

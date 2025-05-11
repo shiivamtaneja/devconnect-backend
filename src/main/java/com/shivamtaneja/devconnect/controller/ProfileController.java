@@ -17,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/api/profile")
 @RequiredArgsConstructor
@@ -45,8 +47,7 @@ public class ProfileController {
    * - Returns the updated profile in the response.
    */
   @PatchMapping("/{id}")
-  public ResponseEntity<ApiResponse<ProfileResponse>> updateProfile(@PathVariable("id") String profileID,
-                                                                    @RequestBody @Valid UpdateProfile profileDTO) {
+  public ResponseEntity<ApiResponse<ProfileResponse>> updateProfile(@PathVariable("id") String profileID, @RequestBody @Valid UpdateProfile profileDTO) {
     ProfileResponse updatedProfile = profileService.updateProfile(profileID, profileDTO);
 
     ApiResponse<ProfileResponse> response = new ApiResponse<>(HttpStatus.OK.value(), updatedProfile, null, true);
@@ -55,17 +56,31 @@ public class ProfileController {
   }
 
   /**
-   * Update an existing developer profile picture.
+   * Update an existing developer profile picture (SYNC).
    * - Validates the request body.
    * - Returns the updated profile in the response.
    */
-  @PatchMapping("/{id}/image")
-  public ResponseEntity<ApiResponse<ProfileResponse>> updateProfile(@PathVariable("id") String profileID, @RequestPart("image") MultipartFile image) {
-    ProfileResponse updatedProfile = profileService.updateProfileImage(profileID);
+  @PatchMapping("/{id}/image/direct")
+  public ResponseEntity<ApiResponse<ProfileResponse>> updateProfileImage_SYNC(@PathVariable("id") String profileID, @RequestPart("image") MultipartFile image) throws IOException {
+    ProfileResponse updatedProfile = profileService.updateProfileImage_SYNC(profileID, image);
 
     ApiResponse<ProfileResponse> response = new ApiResponse<>(HttpStatus.OK.value(), updatedProfile, null, true);
 
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  /**
+   * Update an existing developer profile picture (ASYNC).
+   * - Validates the request body.
+   * - Returns the updated profile in the response.
+   */
+  @PatchMapping("/{id}/image")
+  public ResponseEntity<ApiResponse<String>> updateProfileImage_ASYNC(@PathVariable("id") String profileID, @RequestPart("image") MultipartFile image) {
+    // TODO:
+
+    ApiResponse<String> response = new ApiResponse<>(HttpStatus.ACCEPTED.value(), "Upload started. Image will be updated soon.", null, true);
+
+    return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
   }
 
   /**

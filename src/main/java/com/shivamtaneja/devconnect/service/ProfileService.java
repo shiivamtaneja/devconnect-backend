@@ -1,5 +1,7 @@
 package com.shivamtaneja.devconnect.service;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.shivamtaneja.devconnect.dto.profile.CreateProfile;
@@ -12,11 +14,19 @@ import com.shivamtaneja.devconnect.repository.ProfileRepo;
 import com.shivamtaneja.devconnect.utils.StringConstants;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProfileService {
   private final ProfileRepo profileRepo;
+  private final AzureBlobService azureBlobService;
+
+  @Value("${AZURE_BLOB_STORAGE_PROFILE_PICTURE_CONTAINER_NAME}")
+  private String profilePicContainerName;
 
   /**
    * Retrieve a profile by its ID.
@@ -90,16 +100,20 @@ public class ProfileService {
   }
 
   /**
-   * Update an existing profile.
+   * Update an existing profile's pic (Sync method).
    * Throws NotFoundException if the profile does not exist.
    *
-   * @param profileID  The ID of the profile to update.
-//   * @param profileDTO The updated profile data.
+   * @param profileID The ID of the profile to update.
+   * @param image     The image to be set as profile picture.
    * @return ProfileResponse containing the updated profile.
    */
-  public ProfileResponse updateProfileImage(String profileID) {
+  public ProfileResponse updateProfileImage_SYNC(String profileID, MultipartFile image) throws IOException {
     Profile existingProfile = profileRepo.findById(profileID)
             .orElseThrow(() -> new NotFoundException(StringConstants.PROFILE_NOT_FOUND_MESSAGE + profileID));
+
+    String imageUrl = azureBlobService.uploadFile(image, profilePicContainerName, existingProfile.getId());
+    existingProfile.setProfileImageUrl(imageUrl);
+    profileRepo.save(existingProfile);
 
     ProfileResponse profileResponse = new ProfileResponse();
     profileResponse.setProfile(existingProfile);

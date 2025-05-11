@@ -1,0 +1,2 @@
+- [] Implement queue and serverless for async profile picture upload
+- [] Add auth
