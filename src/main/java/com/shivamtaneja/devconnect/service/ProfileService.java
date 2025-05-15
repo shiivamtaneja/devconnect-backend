@@ -126,22 +126,15 @@ public class ProfileService {
     return profileResponse;
   }
 
-  public String generateProfileImageUploadUrl(String profileID
-//          , String extension
-  ) {
+  /**
+   * Generates a SAS URL for uploading a profile image for the given profile ID.
+   */
+  public String generateProfileImageUploadUrl(String profileID) {
     profileRepo.findById(profileID)
             .orElseThrow(() -> new NotFoundException(
                     String.format(CustomExceptionMessages.PROFILE_NOT_FOUND, profileID)
             ));
 
-//    if (!isValidImageExtension(extension)) {
-//      throw new IllegalArgumentException("Invalid image extension");
-//    }
-
-    // Generate blob name (e.g., "profileID.jpg")
-//    String blobName = profileID + "." + extension;
-
-    // Delegate to blob service to generate the SAS URL
     return azureBlobService.generateBlobSasUrl(profileImagesContainer, profileID);
   }
 
@@ -158,11 +151,5 @@ public class ProfileService {
             ));
 
     profileRepo.deleteById(profileID);
-  }
-
-  private boolean isValidImageExtension(String extension) {
-    return extension.equalsIgnoreCase("jpg") ||
-            extension.equalsIgnoreCase("jpeg") ||
-            extension.equalsIgnoreCase("png");
   }
 }

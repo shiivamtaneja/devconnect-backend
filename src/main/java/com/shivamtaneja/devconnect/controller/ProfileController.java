@@ -77,13 +77,8 @@ public class ProfileController {
    * @return ApiResponse containing the SAS URL for direct upload.
    */
   @PostMapping("/{id}/image/upload-url")
-  public ResponseEntity<ApiResponse<String>> updateProfileImageASYNC(
-          @PathVariable("id") String profileID
-//          , @RequestParam("extension") String extension
-  ) {
-    String sasUrl = profileService.generateProfileImageUploadUrl(profileID
-//            , extension
-    );
+  public ResponseEntity<ApiResponse<String>> updateProfileImageASYNC(@PathVariable("id") String profileID) {
+    String sasUrl = profileService.generateProfileImageUploadUrl(profileID);
 
     ApiResponse<String> response = new ApiResponse<>(HttpStatus.ACCEPTED.value(), sasUrl, null, true);
 
