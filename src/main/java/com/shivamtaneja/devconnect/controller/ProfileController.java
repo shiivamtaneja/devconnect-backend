@@ -57,12 +57,13 @@ public class ProfileController {
 
   /**
    * Update an existing developer profile picture (SYNC).
+   * - Accepts a multipart image file.
    * - Validates the request body.
    * - Returns the updated profile in the response.
    */
   @PatchMapping("/{id}/image/direct")
-  public ResponseEntity<ApiResponse<ProfileResponse>> updateProfileImage_SYNC(@PathVariable("id") String profileID, @RequestPart("image") MultipartFile image) throws IOException {
-    ProfileResponse updatedProfile = profileService.updateProfileImage_SYNC(profileID, image);
+  public ResponseEntity<ApiResponse<ProfileResponse>> updateProfileImageSYNC(@PathVariable("id") String profileID, @RequestPart("image") MultipartFile image) throws IOException {
+    ProfileResponse updatedProfile = profileService.updateProfileImageSYNC(profileID, image);
 
     ApiResponse<ProfileResponse> response = new ApiResponse<>(HttpStatus.OK.value(), updatedProfile, null, true);
 
@@ -70,15 +71,21 @@ public class ProfileController {
   }
 
   /**
-   * Update an existing developer profile picture (ASYNC).
-   * - Validates the request body.
-   * - Returns the updated profile in the response.
+   * Endpoint to generate a SAS (Shared Access Signature) URL for uploading a profile image.
+   *
+   * @param profileID The ID of the profile for which the image will be uploaded.
+   * @return ApiResponse containing the SAS URL for direct upload.
    */
-  @PatchMapping("/{id}/image")
-  public ResponseEntity<ApiResponse<String>> updateProfileImage_ASYNC(@PathVariable("id") String profileID, @RequestPart("image") MultipartFile image) {
-    // TODO:
+  @PostMapping("/{id}/image/upload-url")
+  public ResponseEntity<ApiResponse<String>> updateProfileImageASYNC(
+          @PathVariable("id") String profileID
+//          , @RequestParam("extension") String extension
+  ) {
+    String sasUrl = profileService.generateProfileImageUploadUrl(profileID
+//            , extension
+    );
 
-    ApiResponse<String> response = new ApiResponse<>(HttpStatus.ACCEPTED.value(), "Upload started. Image will be updated soon.", null, true);
+    ApiResponse<String> response = new ApiResponse<>(HttpStatus.ACCEPTED.value(), sasUrl, null, true);
 
     return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
   }

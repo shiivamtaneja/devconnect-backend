@@ -1,5 +1,6 @@
 package com.shivamtaneja.devconnect.service;
 
+import com.shivamtaneja.devconnect.utils.CustomExceptionMessages;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,6 @@ import com.shivamtaneja.devconnect.entity.Profile;
 import com.shivamtaneja.devconnect.exceptions.ExistsException;
 import com.shivamtaneja.devconnect.exceptions.NotFoundException;
 import com.shivamtaneja.devconnect.repository.ProfileRepo;
-import com.shivamtaneja.devconnect.utils.StringConstants;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,7 +26,7 @@ public class ProfileService {
   private final AzureBlobService azureBlobService;
 
   @Value("${AZURE_BLOB_STORAGE_PROFILE_PICTURE_CONTAINER_NAME}")
-  private String profilePicContainerName;
+  private String profileImagesContainer;
 
   /**
    * Retrieve a profile by its ID.
@@ -37,7 +37,9 @@ public class ProfileService {
    */
   public ProfileResponse getProfile(String profileID) {
     Profile profile = profileRepo.findById(profileID)
-            .orElseThrow(() -> new NotFoundException(StringConstants.PROFILE_NOT_FOUND_MESSAGE + profileID));
+            .orElseThrow(() -> new NotFoundException(
+                    String.format(CustomExceptionMessages.PROFILE_NOT_FOUND, profileID)
+            ));
 
     ProfileResponse profileResponse = new ProfileResponse();
     profileResponse.setProfile(profile);
@@ -86,7 +88,9 @@ public class ProfileService {
    */
   public ProfileResponse updateProfile(String profileID, UpdateProfile profileDTO) {
     Profile existingProfile = profileRepo.findById(profileID)
-            .orElseThrow(() -> new NotFoundException(StringConstants.PROFILE_NOT_FOUND_MESSAGE + profileID));
+            .orElseThrow(() -> new NotFoundException(
+                    String.format(CustomExceptionMessages.PROFILE_NOT_FOUND, profileID)
+            ));
 
     existingProfile.setBio(profileDTO.getBio());
     existingProfile.setGithubUrl(profileDTO.getGithubUrl());
@@ -107,17 +111,38 @@ public class ProfileService {
    * @param image     The image to be set as profile picture.
    * @return ProfileResponse containing the updated profile.
    */
-  public ProfileResponse updateProfileImage_SYNC(String profileID, MultipartFile image) throws IOException {
+  public ProfileResponse updateProfileImageSYNC(String profileID, MultipartFile image) throws IOException {
     Profile existingProfile = profileRepo.findById(profileID)
-            .orElseThrow(() -> new NotFoundException(StringConstants.PROFILE_NOT_FOUND_MESSAGE + profileID));
+            .orElseThrow(() -> new NotFoundException(
+                    String.format(CustomExceptionMessages.PROFILE_NOT_FOUND, profileID)
+            ));
 
-    String imageUrl = azureBlobService.uploadFile(image, profilePicContainerName, existingProfile.getId());
+    String imageUrl = azureBlobService.uploadFile(image, profileImagesContainer, existingProfile.getId());
     existingProfile.setProfileImageUrl(imageUrl);
     profileRepo.save(existingProfile);
 
     ProfileResponse profileResponse = new ProfileResponse();
     profileResponse.setProfile(existingProfile);
     return profileResponse;
+  }
+
+  public String generateProfileImageUploadUrl(String profileID
+//          , String extension
+  ) {
+    profileRepo.findById(profileID)
+            .orElseThrow(() -> new NotFoundException(
+                    String.format(CustomExceptionMessages.PROFILE_NOT_FOUND, profileID)
+            ));
+
+//    if (!isValidImageExtension(extension)) {
+//      throw new IllegalArgumentException("Invalid image extension");
+//    }
+
+    // Generate blob name (e.g., "profileID.jpg")
+//    String blobName = profileID + "." + extension;
+
+    // Delegate to blob service to generate the SAS URL
+    return azureBlobService.generateBlobSasUrl(profileImagesContainer, profileID);
   }
 
   /**
@@ -128,8 +153,16 @@ public class ProfileService {
    */
   public void deleteProfile(String profileID) {
     profileRepo.findById(profileID)
-            .orElseThrow(() -> new NotFoundException(StringConstants.PROFILE_NOT_FOUND_MESSAGE + profileID));
+            .orElseThrow(() -> new NotFoundException(
+                    String.format(CustomExceptionMessages.PROFILE_NOT_FOUND, profileID)
+            ));
 
     profileRepo.deleteById(profileID);
+  }
+
+  private boolean isValidImageExtension(String extension) {
+    return extension.equalsIgnoreCase("jpg") ||
+            extension.equalsIgnoreCase("jpeg") ||
+            extension.equalsIgnoreCase("png");
   }
 }

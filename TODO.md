@@ -1,2 +1,2 @@
-- [] Implement queue and serverless for async profile picture upload
+- [x] Implement sas token for async profile picture upload
 - [] Add auth
