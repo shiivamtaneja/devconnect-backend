@@ -28,6 +28,9 @@ public class ProfileService {
   @Value("${AZURE_BLOB_STORAGE_PROFILE_PICTURE_CONTAINER_NAME}")
   private String profileImagesContainer;
 
+  @Value("${AZURE_BLOB_STORAGE_ACCOUNT_NAME}")
+  private String storageAccountName;
+
   /**
    * Retrieve a profile by its ID.
    * Throws NotFoundException if the profile does not exist.
@@ -128,6 +131,9 @@ public class ProfileService {
 
   /**
    * Generates a SAS URL for uploading a profile image for the given profile ID.
+   *
+   * @param profileID The ID of the profile to update.
+   * @throws NotFoundException if the profile does not exist.
    */
   public String generateProfileImageUploadUrl(String profileID) {
     profileRepo.findById(profileID)
@@ -136,6 +142,31 @@ public class ProfileService {
             ));
 
     return azureBlobService.generateBlobSasUrl(profileImagesContainer, profileID);
+  }
+
+  /**
+   * Updates the profileImageUrl for the given profile ID after verifying the image exists in Blob Storage.
+   *
+   * @param profileID The ID of the profile to update.
+   * @throws NotFoundException if the profile or image does not exist.
+   */
+  public void updateProfileImageUrl(String profileID) {
+    Profile profile = profileRepo.findById(profileID)
+            .orElseThrow(() -> new NotFoundException(
+                    String.format(CustomExceptionMessages.PROFILE_NOT_FOUND, profileID)
+            ));
+
+    boolean fileExists = azureBlobService.fileExists(profileImagesContainer, profile.getId());
+
+    if (!fileExists) {
+      throw new NotFoundException("Profile picture not found! Can't save to db!");
+    }
+
+    String imageUrl = String.format("https://%s.blob.core.windows.net/%s/%s",
+            storageAccountName, profileImagesContainer, profileID);
+
+    profile.setProfileImageUrl(imageUrl);
+    profileRepo.save(profile);
   }
 
   /**

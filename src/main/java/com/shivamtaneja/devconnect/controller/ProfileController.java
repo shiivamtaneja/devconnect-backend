@@ -86,6 +86,21 @@ public class ProfileController {
   }
 
   /**
+   * Endpoint to finalize the profile image upload process.
+   *
+   * @param profileID The ID of the profile for which the image will be uploaded.
+   * @return ApiResponse indicating success.
+   */
+  @PostMapping("/{id}/image/upload-complete")
+  public ResponseEntity<ApiResponse<Void>> completeProfileImageUpload(@PathVariable("id") String profileID) {
+    profileService.updateProfileImageUrl(profileID);
+
+    ApiResponse<Void> response = new ApiResponse<>(HttpStatus.OK.value(), null, null, true);
+
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  /**
    * Get a developer profile by ID.
    * - Returns the profile in the response.
    */

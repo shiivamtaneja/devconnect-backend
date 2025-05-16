@@ -48,4 +48,11 @@ public class AzureBlobService {
 
     return blobClient.getBlobUrl() + "?" + sasToken;
   }
+
+  public boolean fileExists(String containerName, String blobName) {
+    BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerName);
+    BlobClient blobClient = containerClient.getBlobClient(blobName);
+
+    return blobClient.exists();
+  }
 }
